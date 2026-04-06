@@ -138,6 +138,19 @@ body { max-width: 820px; margin: 0 auto; padding: 0 22px 80px; }
 .panel { display: none; }
 .panel.active { display: block; }
 
+/* DATE NAV */
+.date-nav { display:flex; align-items:center; background:var(--surface); border:1px solid var(--border); border-radius:var(--r-sm); overflow:hidden; margin-bottom:22px; }
+.date-nav-btn { background:none; border:none; color:var(--muted2); padding:10px 16px; cursor:pointer; font-size:15px; transition:color 0.15s,background 0.15s; flex-shrink:0; }
+.date-nav-btn:hover { color:var(--text); background:var(--surface2); }
+.date-nav-btn:disabled { color:var(--muted); cursor:default; }
+.date-center { flex:1; display:flex; align-items:center; justify-content:center; gap:10px; border-left:1px solid var(--border); border-right:1px solid var(--border); padding:10px 8px; cursor:pointer; transition:background 0.15s; }
+.date-center:hover { background:var(--surface2); }
+.date-display { font-family:'DM Mono',monospace; font-size:13px; color:var(--muted2); }
+.date-display.is-today { color:var(--text); }
+.today-pill { font-size:11px; background:rgba(232,98,42,0.12); color:var(--fire); border-radius:20px; padding:2px 8px; font-family:'DM Sans',sans-serif; font-weight:500; white-space:nowrap; }
+.past-banner { background:rgba(201,168,76,0.07); border:1px solid rgba(201,168,76,0.18); border-radius:var(--r-sm); padding:10px 16px; font-size:13px; color:var(--gold); display:flex; align-items:center; gap:8px; margin-bottom:20px; }
+.past-banner.hidden { display:none; }
+
 @media(max-width:520px) { .stat-grid{grid-template-columns:repeat(2,1fr);} .streak-num{font-size:36px;} }
 </style>
 </head>
@@ -146,12 +159,25 @@ body { max-width: 820px; margin: 0 auto; padding: 0 22px 80px; }
 <div class="header">
   <div>
     <div class="header-title">Habits</div>
-    <div class="header-date" id="hDate"></div>
   </div>
   <div class="xp-badge">
     <span class="lvl" id="lvlLbl">Lv.1</span>
     <span class="xpv" id="xpLbl">0 XP</span>
   </div>
+</div>
+
+<div class="date-nav">
+  <button class="date-nav-btn" id="prevDay">&#8592;</button>
+  <div class="date-center" id="dateCenter">
+    <span class="date-display" id="dateDisplay"></span>
+    <span class="today-pill" id="todayPill">Today</span>
+  </div>
+  <button class="date-nav-btn" id="nextDay">&#8594;</button>
+</div>
+
+<div class="past-banner hidden" id="pastBanner">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+  Editing a past day — changes saved to that date
 </div>
 
 <div class="streak-hero">
@@ -268,6 +294,52 @@ if(!D.totalDone) D.totalDone=0;
 
 const save = ()=>localStorage.setItem('hd',JSON.stringify(D));
 
+// DATE NAV
+let activeDate = today();
+const isToday = () => activeDate === today();
+
+function setActiveDate(k) {
+  activeDate = k;
+  const d = new Date(k + 'T12:00:00');
+  const label = isToday()
+    ? 'Today'
+    : d.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'});
+  const disp = document.getElementById('dateDisplay');
+  const pill = document.getElementById('todayPill');
+  const banner = document.getElementById('pastBanner');
+  const nextBtn = document.getElementById('nextDay');
+  disp.textContent = isToday() ? '' : label;
+  disp.className = 'date-display' + (isToday() ? ' is-today' : '');
+  pill.style.display = isToday() ? '' : 'none';
+  banner.classList.toggle('hidden', isToday());
+  nextBtn.disabled = isToday();
+  if(!D.days[activeDate]) D.days[activeDate] = {};
+  renderAll();
+}
+
+document.getElementById('prevDay').addEventListener('click', () => {
+  const d = new Date(activeDate + 'T12:00:00');
+  d.setDate(d.getDate() - 1);
+  setActiveDate(dk(d));
+});
+document.getElementById('nextDay').addEventListener('click', () => {
+  if(isToday()) return;
+  const d = new Date(activeDate + 'T12:00:00');
+  d.setDate(d.getDate() + 1);
+  setActiveDate(dk(d));
+});
+document.getElementById('dateCenter').addEventListener('click', () => {
+  const input = document.createElement('input');
+  input.type = 'date';
+  input.value = activeDate;
+  input.max = today();
+  input.style.cssText = 'position:fixed;opacity:0;pointer-events:none;';
+  document.body.appendChild(input);
+  input.addEventListener('change', () => { setActiveDate(input.value); document.body.removeChild(input); });
+  input.addEventListener('blur', () => { setTimeout(() => { if(document.body.contains(input)) document.body.removeChild(input); }, 200); });
+  input.click(); input.focus();
+});
+
 function streak() {
   let s=0, d=new Date();
   for(let i=0;i<1000;i++){
@@ -305,9 +377,11 @@ function stats() {
 
 // HEADER
 function renderHeader(){
-  const now=new Date();
-  document.getElementById('hDate').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-  const {xp,level,xpIn,streak:str,pct}=stats();
+  const {xp,level,xpIn,streak:str}=stats();
+  // completion based on activeDate
+  const ad=D.days[activeDate]||{};
+  const adDone=HABITS.filter(h=>ad[h.id]).length;
+  const pct=Math.round(adDone/HABITS.length*100);
   document.getElementById('lvlLbl').textContent=`Lv.${level}`;
   document.getElementById('xpLbl').textContent=`${xp} XP`;
   if(str>D.bestStreak){D.bestStreak=str;save();}
@@ -322,7 +396,7 @@ function renderHeader(){
 // HABITS
 function renderHabits(){
   const list=document.getElementById('habitList');
-  const tod=D.days[today()]||{};
+  const tod=D.days[activeDate]||{};
   list.innerHTML='';
   HABITS.forEach((h,i)=>{
     const done=!!tod[h.id];
@@ -345,7 +419,7 @@ function renderHabits(){
 }
 
 function toggle(id,el){
-  const k=today();
+  const k=activeDate;
   if(!D.days[k]) D.days[k]={};
   const was=!!D.days[k][id];
   D.days[k][id]=!was;
@@ -481,7 +555,7 @@ document.querySelectorAll('.tab').forEach(t=>{
 });
 
 function renderAll(){ renderHeader(); renderHabits(); renderBadges(); }
-renderAll();
+setActiveDate(today());
 </script>
 </body>
 </html>
