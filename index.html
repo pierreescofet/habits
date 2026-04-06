@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Habits</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0a0b;
+  --surface: #111113;
+  --surface2: #18181c;
+  --surface3: #1f1f25;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.11);
+  --text: #eeeae3;
+  --muted: rgba(238,234,227,0.38);
+  --muted2: rgba(238,234,227,0.62);
+  --fire: #e8622a;
+  --fire2: #f0a060;
+  --gold: #c9a84c;
+  --green: #52b788;
+  --r: 14px;
+  --r-sm: 9px;
+}
+html { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; line-height: 1.5; min-height: 100vh; }
+body { max-width: 820px; margin: 0 auto; padding: 0 22px 80px; }
+
+/* HEADER */
+.header { display: flex; align-items: center; justify-content: space-between; padding: 36px 0 26px; border-bottom: 1px solid var(--border); margin-bottom: 30px; }
+.header-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 600; letter-spacing: -0.3px; }
+.header-date { font-size: 13px; color: var(--muted2); font-family: 'DM Mono', monospace; margin-top: 2px; }
+.xp-badge { display: flex; align-items: center; gap: 8px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 40px; padding: 7px 14px; font-family: 'DM Mono', monospace; font-size: 13px; }
+.xp-badge .lvl { color: var(--gold); }
+.xp-badge .xpv { color: var(--muted2); }
+
+/* STREAK */
+.streak-hero { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 22px 26px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; position: relative; overflow: hidden; }
+.streak-hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--fire) 40%, transparent); opacity: 0.45; }
+.streak-left { display: flex; align-items: center; gap: 16px; }
+.streak-flame { font-size: 36px; filter: drop-shadow(0 0 10px rgba(232,98,42,0.45)); }
+.streak-num { font-family: 'Syne', sans-serif; font-size: 44px; font-weight: 700; color: var(--fire); line-height: 1; letter-spacing: -2px; }
+.streak-lbl { font-size: 13px; color: var(--muted); margin-top: 1px; }
+.streak-best { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; text-align: right; }
+.streak-best span { color: var(--gold); }
+
+/* PROGRESS */
+.prog-section { margin-bottom: 22px; }
+.prog-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 9px; }
+.prog-label { font-size: 12px; color: var(--muted); letter-spacing: 0.07em; text-transform: uppercase; font-weight: 500; }
+.prog-pct { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 600; }
+.track { height: 4px; background: var(--surface3); border-radius: 99px; overflow: hidden; }
+.fill { height: 100%; border-radius: 99px; transition: width 0.65s cubic-bezier(0.34,1.56,0.64,1); }
+.fill-fire { background: linear-gradient(90deg, var(--fire), var(--fire2)); }
+.fill-gold { background: linear-gradient(90deg, var(--gold), #e8c87a); }
+.xp-row { display: flex; justify-content: space-between; margin-top: 10px 0 6px; }
+.xp-row-txt { font-size: 12px; color: var(--muted); margin-bottom: 6px; display: flex; justify-content: space-between; }
+
+/* TABS */
+.tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 4px; margin-bottom: 26px; }
+.tab { flex: 1; text-align: center; padding: 8px 10px; border: none; background: transparent; color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; border-radius: 6px; cursor: pointer; transition: all 0.18s; }
+.tab:hover { color: var(--text); }
+.tab.active { background: var(--surface3); color: var(--text); border: 1px solid var(--border2); }
+
+/* STAT GRID */
+.stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 26px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 16px 18px; }
+.stat-lbl { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 7px; }
+.stat-val { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 600; line-height: 1; }
+.stat-sub { font-size: 11px; color: var(--muted); margin-top: 3px; font-family: 'DM Mono', monospace; }
+.c-fire { color: var(--fire); } .c-gold { color: var(--gold); } .c-green { color: var(--green); }
+
+/* SECTION LABEL */
+.sec-lbl { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 11px; font-weight: 500; }
+
+/* HABITS */
+.habit-list { display: flex; flex-direction: column; gap: 7px; margin-bottom: 26px; }
+.habit-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 14px 18px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: border-color 0.2s, background 0.2s; position: relative; overflow: hidden; user-select: none; }
+.habit-item:hover { border-color: var(--border2); }
+.habit-item.done { border-color: rgba(82,183,136,0.22); background: rgba(82,183,136,0.035); }
+.habit-item.done::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--green); }
+.check { width: 21px; height: 21px; flex-shrink: 0; border: 1.5px solid var(--border2); border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.habit-item.done .check { background: var(--green); border-color: var(--green); }
+.check-svg { opacity: 0; transition: opacity 0.15s; }
+.habit-item.done .check-svg { opacity: 1; }
+.habit-info { flex: 1; }
+.habit-name { font-size: 15px; font-weight: 400; transition: color 0.2s; }
+.habit-item.done .habit-name { color: var(--muted2); }
+.habit-xp { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; margin-top: 1px; }
+.habit-streak { font-size: 12px; color: var(--muted); }
+.habit-streak.hot { color: var(--fire2); }
+
+/* WEEK CHART */
+.week-chart { display: flex; gap: 7px; align-items: flex-end; height: 90px; margin-bottom: 8px; }
+.bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.bar-track { flex: 1; width: 100%; background: var(--surface2); border-radius: 5px; display: flex; align-items: flex-end; overflow: hidden; min-height: 70px; }
+.bar-fill { width: 100%; border-radius: 5px; background: linear-gradient(180deg, var(--green), rgba(82,183,136,0.4)); transition: height 0.55s cubic-bezier(0.34,1.56,0.64,1); }
+.bar-fill.today { background: linear-gradient(180deg, var(--fire), var(--fire2)); }
+.bar-lbl { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
+.week-labels { display: flex; gap: 7px; }
+.week-labels span { flex: 1; text-align: center; font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
+
+/* HEATMAP */
+.heatmap { display: flex; gap: 3px; flex-wrap: wrap; }
+.hm { width: 13px; height: 13px; border-radius: 3px; background: var(--surface2); }
+.hm.l1 { background: rgba(82,183,136,0.2); } .hm.l2 { background: rgba(82,183,136,0.42); } .hm.l3 { background: rgba(82,183,136,0.68); } .hm.l4 { background: var(--green); }
+.hm-labels { display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
+
+/* MILESTONES */
+.badge-strip { display: flex; gap: 9px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; margin-bottom: 26px; }
+.badge-strip::-webkit-scrollbar { display: none; }
+.badge { flex-shrink: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 12px 14px; display: flex; align-items: center; gap: 10px; min-width: 155px; }
+.badge.earned { border-color: rgba(201,168,76,0.28); background: rgba(201,168,76,0.06); }
+.badge-icon { font-size: 19px; }
+.badge-name { font-size: 13px; font-weight: 500; }
+.badge.earned .badge-name { color: var(--gold); }
+.badge-req { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
+
+/* EXPORT */
+.export-btn { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border2); border-radius: var(--r-sm); padding: 10px 16px; color: var(--muted2); font-size: 13px; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.18s; }
+.export-btn:hover { color: var(--text); background: var(--surface2); }
+
+/* TOAST */
+.toast-wrap { position: fixed; top: 22px; left: 50%; transform: translateX(-50%); z-index: 999; pointer-events: none; }
+.toast { background: var(--surface2); border: 1px solid var(--border2); border-radius: 40px; padding: 10px 20px; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px; opacity: 0; transform: translateY(-10px) scale(0.95); transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1); white-space: nowrap; }
+.toast.show { opacity: 1; transform: translateY(0) scale(1); }
+
+/* BOX WRAPPER */
+.box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 20px; margin-bottom: 0; }
+
+/* ANIMS */
+@keyframes pop { 0%{transform:scale(1)} 40%{transform:scale(1.15)} 100%{transform:scale(1)} }
+@keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+.habit-item { animation: fadeUp 0.4s ease both; }
+.pop { animation: pop 0.32s ease; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+@media(max-width:520px) { .stat-grid{grid-template-columns:repeat(2,1fr);} .streak-num{font-size:36px;} }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">Habits</div>
+    <div class="header-date" id="hDate"></div>
+  </div>
+  <div class="xp-badge">
+    <span class="lvl" id="lvlLbl">Lv.1</span>
+    <span class="xpv" id="xpLbl">0 XP</span>
+  </div>
+</div>
+
+<div class="streak-hero">
+  <div class="streak-left">
+    <div class="streak-flame">🔥</div>
+    <div>
+      <div class="streak-num" id="streakNum">0</div>
+      <div class="streak-lbl">day streak</div>
+    </div>
+  </div>
+  <div>
+    <div class="streak-best">Best: <span id="bestStreak">0</span> days</div>
+  </div>
+</div>
+
+<div class="prog-section">
+  <div class="prog-header">
+    <span class="prog-label">Today's completion</span>
+    <span class="prog-pct" id="compPct">0%</span>
+  </div>
+  <div class="track"><div class="fill fill-fire" id="compBar" style="width:0%"></div></div>
+  <div class="xp-row-txt" style="margin-top:10px;">
+    <span>XP to next level</span>
+    <span id="xpRemain" style="font-family:'DM Mono',monospace;color:var(--muted);">100 XP remaining</span>
+  </div>
+  <div class="track"><div class="fill fill-gold" id="xpBar" style="width:0%"></div></div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-p="today">Today</button>
+  <button class="tab" data-p="week">Week</button>
+  <button class="tab" data-p="month">Month</button>
+  <button class="tab" data-p="year">Year</button>
+</div>
+
+<!-- TODAY -->
+<div class="panel active" id="panel-today">
+  <div class="sec-lbl">Daily habits</div>
+  <div class="habit-list" id="habitList"></div>
+  <div class="sec-lbl">Badges</div>
+  <div class="badge-strip" id="badgeStrip"></div>
+  <button class="export-btn" id="exportBtn">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Export to CSV
+  </button>
+</div>
+
+<!-- WEEK -->
+<div class="panel" id="panel-week">
+  <div class="stat-grid" id="weekStats"></div>
+  <div class="sec-lbl">This week</div>
+  <div class="box">
+    <div class="week-chart" id="weekChart"></div>
+    <div class="week-labels" id="weekLabels"></div>
+  </div>
+</div>
+
+<!-- MONTH -->
+<div class="panel" id="panel-month">
+  <div class="stat-grid" id="monthStats"></div>
+  <div class="sec-lbl">Past 30 days</div>
+  <div class="box">
+    <div class="heatmap" id="heatmap30"></div>
+    <div class="hm-labels"><span>30 days ago</span><span>Today</span></div>
+  </div>
+</div>
+
+<!-- YEAR -->
+<div class="panel" id="panel-year">
+  <div class="stat-grid" id="yearStats"></div>
+  <div class="sec-lbl">Past 365 days</div>
+  <div class="box">
+    <div class="heatmap" id="heatmap365"></div>
+    <div class="hm-labels"><span>365 days ago</span><span>Today</span></div>
+  </div>
+</div>
+
+<div class="toast-wrap"><div class="toast" id="toast"><span id="toastIcon"></span><span id="toastMsg"></span></div></div>
+
+<script>
+const HABITS = [
+  { id:'workout',    name:'Workout',          icon:'💪', xp:30 },
+  { id:'meditation', name:'Meditation',        icon:'🧘', xp:20 },
+  { id:'work',       name:'Work',              icon:'💼', xp:40 },
+  { id:'mindset',    name:'Mindset learning',  icon:'🧠', xp:20 },
+  { id:'reading',    name:'Reading',           icon:'📖', xp:20 },
+  { id:'stretching', name:'Stretching',        icon:'🤸', xp:15 },
+  { id:'spanish',    name:'Learn Spanish',     icon:'🇲🇽', xp:20 },
+  { id:'positive',   name:'Positive stuff',    icon:'✨', xp:15 },
+];
+
+const BADGES = [
+  { id:'first',   name:'First step',    icon:'🌱', req:'Complete 1 habit',      ok:s=>s.totalDone>=1 },
+  { id:'s3',      name:'3-day streak',  icon:'🔥', req:'3 days in a row',       ok:s=>s.streak>=3 },
+  { id:'s7',      name:'Week warrior',  icon:'⚡', req:'7 days in a row',       ok:s=>s.streak>=7 },
+  { id:'s30',     name:'Unstoppable',   icon:'💎', req:'30-day streak',         ok:s=>s.streak>=30 },
+  { id:'perfect', name:'Perfect day',   icon:'⭐', req:'All habits in one day', ok:s=>s.hadPerfect },
+  { id:'xp100',   name:'XP Hunter',     icon:'🏅', req:'Earn 100 XP',           ok:s=>s.totalXP>=100 },
+  { id:'xp500',   name:'XP Machine',    icon:'🏆', req:'Earn 500 XP',           ok:s=>s.totalXP>=500 },
+  { id:'lv5',     name:'Level 5',       icon:'🌟', req:'Reach level 5',         ok:s=>s.level>=5 },
+];
+
+const XPL = 100;
+const dk = d => d.toISOString().split('T')[0];
+const today = () => dk(new Date());
+
+let D = (() => { try{ return JSON.parse(localStorage.getItem('hd')||'{}'); }catch{ return {}; } })();
+if(!D.days) D.days={};
+if(!D.days[today()]) D.days[today()]={};
+if(!D.totalXP) D.totalXP=0;
+if(!D.bestStreak) D.bestStreak=0;
+if(!D.hadPerfect) D.hadPerfect=false;
+if(!D.totalDone) D.totalDone=0;
+
+const save = ()=>localStorage.setItem('hd',JSON.stringify(D));
+
+function streak() {
+  let s=0, d=new Date();
+  for(let i=0;i<1000;i++){
+    const k=dk(d), dd=D.days[k]||{};
+    const n=HABITS.filter(h=>dd[h.id]).length;
+    if(k===today()){ if(n===0&&s===0){d.setDate(d.getDate()-1);continue;} if(n>0)s++; else break; }
+    else { if(n>0)s++; else break; }
+    d.setDate(d.getDate()-1);
+  }
+  return s;
+}
+
+function habitStreak(id) {
+  let s=0, d=new Date();
+  for(let i=0;i<365;i++){
+    const k=dk(d);
+    if(D.days[k]&&D.days[k][id]) s++;
+    else if(k===today()&&s===0){d.setDate(d.getDate()-1);continue;}
+    else break;
+    d.setDate(d.getDate()-1);
+  }
+  return s;
+}
+
+function stats() {
+  const tod=D.days[today()]||{};
+  const done=HABITS.filter(h=>tod[h.id]).length;
+  const pct=Math.round(done/HABITS.length*100);
+  const xp=D.totalXP;
+  const level=Math.floor(xp/XPL)+1;
+  const xpIn=xp%XPL;
+  const str=streak();
+  return {done,total:HABITS.length,pct,xp,level,xpIn,streak:str};
+}
+
+// HEADER
+function renderHeader(){
+  const now=new Date();
+  document.getElementById('hDate').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  const {xp,level,xpIn,streak:str,pct}=stats();
+  document.getElementById('lvlLbl').textContent=`Lv.${level}`;
+  document.getElementById('xpLbl').textContent=`${xp} XP`;
+  if(str>D.bestStreak){D.bestStreak=str;save();}
+  document.getElementById('streakNum').textContent=str;
+  document.getElementById('bestStreak').textContent=D.bestStreak;
+  document.getElementById('compPct').textContent=pct+'%';
+  document.getElementById('compBar').style.width=pct+'%';
+  document.getElementById('xpBar').style.width=Math.round(xpIn/XPL*100)+'%';
+  document.getElementById('xpRemain').textContent=`${XPL-xpIn} XP remaining`;
+}
+
+// HABITS
+function renderHabits(){
+  const list=document.getElementById('habitList');
+  const tod=D.days[today()]||{};
+  list.innerHTML='';
+  HABITS.forEach((h,i)=>{
+    const done=!!tod[h.id];
+    const hs=habitStreak(h.id);
+    const el=document.createElement('div');
+    el.className='habit-item'+(done?' done':'');
+    el.style.animationDelay=(i*0.045)+'s';
+    el.innerHTML=`
+      <div class="check">
+        <svg class="check-svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="habit-info">
+        <div class="habit-name">${h.icon} ${h.name}</div>
+        <div class="habit-xp">+${h.xp} XP per day</div>
+      </div>
+      <div class="habit-streak${hs>=3?' hot':''}">${hs>0?`🔥 ${hs}d`:''}</div>`;
+    el.addEventListener('click',()=>toggle(h.id,el));
+    list.appendChild(el);
+  });
+}
+
+function toggle(id,el){
+  const k=today();
+  if(!D.days[k]) D.days[k]={};
+  const was=!!D.days[k][id];
+  D.days[k][id]=!was;
+  const h=HABITS.find(x=>x.id===id);
+  if(!was){
+    D.totalXP=(D.totalXP||0)+h.xp;
+    D.totalDone=(D.totalDone||0)+1;
+    showToast('🎯',`+${h.xp} XP — ${h.name}`);
+    el.classList.add('pop'); setTimeout(()=>el.classList.remove('pop'),350);
+    if(HABITS.every(x=>D.days[k][x.id])){ D.hadPerfect=true; setTimeout(()=>showToast('⭐','Perfect day! All habits done!'),900); }
+  } else {
+    D.totalXP=Math.max(0,(D.totalXP||0)-h.xp);
+    D.totalDone=Math.max(0,(D.totalDone||0)-1);
+  }
+  save(); renderAll();
+}
+
+// BADGES
+function renderBadges(){
+  const strip=document.getElementById('badgeStrip');
+  strip.innerHTML='';
+  const {streak:str,xp,level}=stats();
+  const s={streak:str,totalXP:D.totalXP,level,totalDone:D.totalDone,hadPerfect:D.hadPerfect};
+  BADGES.forEach(b=>{
+    const earned=b.ok(s);
+    const el=document.createElement('div');
+    el.className='badge'+(earned?' earned':'');
+    el.innerHTML=`<div class="badge-icon">${b.icon}</div><div><div class="badge-name">${b.name}</div><div class="badge-req">${b.req}</div></div>`;
+    strip.appendChild(el);
+  });
+}
+
+// TOAST
+let tt;
+function showToast(icon,msg){
+  const t=document.getElementById('toast');
+  document.getElementById('toastIcon').textContent=icon;
+  document.getElementById('toastMsg').textContent=' '+msg;
+  t.classList.add('show'); clearTimeout(tt);
+  tt=setTimeout(()=>t.classList.remove('show'),2300);
+}
+
+// WEEK
+function renderWeek(){
+  const today_d=new Date();
+  const dayNames=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  let wDone=0,wPerfect=0;
+  const chart=document.getElementById('weekChart');
+  const labels=document.getElementById('weekLabels');
+  chart.innerHTML=''; labels.innerHTML='';
+  for(let i=6;i>=0;i--){
+    const d=new Date(today_d); d.setDate(d.getDate()-i);
+    const k=dk(d), dd=D.days[k]||{};
+    const done=HABITS.filter(h=>dd[h.id]).length;
+    const pct=Math.round(done/HABITS.length*100);
+    if(done>0) wDone++;
+    if(done===HABITS.length) wPerfect++;
+    const isT=i===0;
+    const wrap=document.createElement('div'); wrap.className='bar-wrap';
+    wrap.innerHTML=`<div class="bar-track"><div class="bar-fill${isT?' today':''}" style="height:${pct}%"></div></div>`;
+    chart.appendChild(wrap);
+    const lbl=document.createElement('span');
+    lbl.textContent=dayNames[(today_d.getDay()+6-i)%7];
+    labels.appendChild(lbl);
+  }
+  document.getElementById('weekStats').innerHTML=`
+    <div class="stat-card"><div class="stat-lbl">Active days</div><div class="stat-val c-fire">${wDone}</div><div class="stat-sub">out of 7</div></div>
+    <div class="stat-card"><div class="stat-lbl">Perfect days</div><div class="stat-val c-gold">${wPerfect}</div><div class="stat-sub">this week</div></div>
+    <div class="stat-card"><div class="stat-lbl">Avg completion</div><div class="stat-val c-green">${Math.round(wDone/7*100)}%</div><div class="stat-sub">weekly avg</div></div>`;
+}
+
+// HEATMAP helper
+function buildHeatmap(elId, days){
+  const grid=document.getElementById(elId); grid.innerHTML='';
+  const today_d=new Date();
+  let tot=0,perf=0,xpSum=0;
+  for(let i=days-1;i>=0;i--){
+    const d=new Date(today_d); d.setDate(d.getDate()-i);
+    const k=dk(d), dd=D.days[k]||{};
+    const done=HABITS.filter(h=>dd[h.id]).length;
+    const pct=done/HABITS.length;
+    if(done>0) tot++;
+    if(done===HABITS.length) perf++;
+    xpSum+=HABITS.filter(h=>dd[h.id]).reduce((s,h)=>s+h.xp,0);
+    const c=document.createElement('div');
+    c.className='hm'+(pct===0?'':pct<0.4?' l1':pct<0.7?' l2':pct<1?' l3':' l4');
+    c.title=`${k}: ${done}/${HABITS.length} habits`;
+    grid.appendChild(c);
+  }
+  return {tot,perf,xpSum};
+}
+
+function renderMonth(){
+  const {tot,perf,xpSum}=buildHeatmap('heatmap30',30);
+  document.getElementById('monthStats').innerHTML=`
+    <div class="stat-card"><div class="stat-lbl">Active days</div><div class="stat-val c-fire">${tot}</div><div class="stat-sub">past 30 days</div></div>
+    <div class="stat-card"><div class="stat-lbl">Perfect days</div><div class="stat-val c-gold">${perf}</div><div class="stat-sub">all habits done</div></div>
+    <div class="stat-card"><div class="stat-lbl">XP earned</div><div class="stat-val c-green">${xpSum}</div><div class="stat-sub">this month</div></div>`;
+}
+
+function renderYear(){
+  const {tot,perf}=buildHeatmap('heatmap365',365);
+  document.getElementById('yearStats').innerHTML=`
+    <div class="stat-card"><div class="stat-lbl">Active days</div><div class="stat-val c-fire">${tot}</div><div class="stat-sub">past 365 days</div></div>
+    <div class="stat-card"><div class="stat-lbl">Perfect days</div><div class="stat-val c-gold">${perf}</div><div class="stat-sub">all-time</div></div>
+    <div class="stat-card"><div class="stat-lbl">Total XP</div><div class="stat-val c-green">${D.totalXP}</div><div class="stat-sub">all-time</div></div>`;
+}
+
+// EXPORT
+document.getElementById('exportBtn').addEventListener('click',()=>{
+  const rows=[['Date',...HABITS.map(h=>h.name),'XP','Completion%']];
+  Object.keys(D.days).sort().forEach(k=>{
+    const dd=D.days[k]||{};
+    const done=HABITS.filter(h=>dd[h.id]);
+    rows.push([k,...HABITS.map(h=>dd[h.id]?'1':'0'),done.reduce((s,h)=>s+h.xp,0),Math.round(done.length/HABITS.length*100)+'%']);
+  });
+  const blob=new Blob([rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='habits.csv'; a.click();
+  showToast('📊','CSV exported!');
+});
+
+// TABS
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('panel-'+t.dataset.p).classList.add('active');
+    if(t.dataset.p==='week') renderWeek();
+    if(t.dataset.p==='month') renderMonth();
+    if(t.dataset.p==='year') renderYear();
+  });
+});
+
+function renderAll(){ renderHeader(); renderHabits(); renderBadges(); }
+renderAll();
+</script>
+</body>
+</html>
